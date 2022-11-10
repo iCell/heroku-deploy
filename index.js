@@ -31,10 +31,13 @@ const addRemote = ({ app_name, dontautocreate, buildpack, region, team, stack })
         (stack ? " --stack " + stack : "") +
         (team ? " --team " + team : "")
     );
+    execSync(
+      "heroku buildpacks:add -i 1 https://github.com/heroku/heroku-buildpack-github-netrc.git"
+    );
   }
 };
 
-const addConfig = ({ app_name, env_file, appdir }) => {
+const addConfig = ({ app_name, env_file, appdir, github_token }) => {
   let configVars = [];
   for (let key in process.env) {
     if (key.startsWith("HD_")) {
@@ -52,6 +55,9 @@ const addConfig = ({ app_name, env_file, appdir }) => {
   }
   if (configVars.length !== 0) {
     execSync(`heroku config:set --app=${app_name} ${configVars.join(" ")}`);
+  }
+  if (github_token) {
+    execSync(`heroku config:set GITHUB_AUTH_TOKEN=${github_token}`);
   }
 };
 
@@ -131,6 +137,7 @@ const healthcheckFailed = ({
 let heroku = {
   api_key: core.getInput("heroku_api_key"),
   email: core.getInput("heroku_email"),
+  github_token: core.getInput("github_token"),
   app_name: core.getInput("heroku_app_name"),
   buildpack: core.getInput("buildpack"),
   branch: core.getInput("branch"),
